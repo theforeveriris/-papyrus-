@@ -11,7 +11,7 @@ export default function Desk({ color = '#3a2820', type = 'oak' }) {
       <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
         <planeGeometry args={[12, 12, 64, 64]} />
         <meshStandardMaterial
-          color={color}
+          color="#ffffff"
           roughness={roughness}
           metalness={metalness}
           map={map}

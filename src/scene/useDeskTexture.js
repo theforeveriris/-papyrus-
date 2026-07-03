@@ -448,19 +448,17 @@ export function useDeskTexture({ type = 'oak', color = '#3a2820', resolution = 1
     canvas.height = resolution
     const ctx = canvas.getContext('2d')
 
-    const base = new THREE.Color(color)
-    const tint = [base.r * 255, base.g * 255, base.b * 255]
     const params = deskMaterialParams[type] || deskMaterialParams.oak
 
-    if (type === 'oak') generateWoodTexture(ctx, resolution, 'oak', tint)
-    else if (type === 'walnut') generateWoodTexture(ctx, resolution, 'walnut', tint)
-    else if (type === 'cherry') generateWoodTexture(ctx, resolution, 'cherry', tint)
-    else if (type === 'mahogany') generateWoodTexture(ctx, resolution, 'mahogany', tint)
-    else if (type === 'marble') generateMarbleTexture(ctx, resolution, tint)
-    else if (type === 'leather') generateLeatherTexture(ctx, resolution, tint)
-    else if (type === 'concrete') generateConcreteTexture(ctx, resolution, tint)
-    else if (type === 'metal') generateBrushedMetalTexture(ctx, resolution, tint)
-    else generateDarkMatteTexture(ctx, resolution, tint)
+    if (type === 'oak') generateWoodTexture(ctx, resolution, 'oak', null)
+    else if (type === 'walnut') generateWoodTexture(ctx, resolution, 'walnut', null)
+    else if (type === 'cherry') generateWoodTexture(ctx, resolution, 'cherry', null)
+    else if (type === 'mahogany') generateWoodTexture(ctx, resolution, 'mahogany', null)
+    else if (type === 'marble') generateMarbleTexture(ctx, resolution, null)
+    else if (type === 'leather') generateLeatherTexture(ctx, resolution, null)
+    else if (type === 'concrete') generateConcreteTexture(ctx, resolution, null)
+    else if (type === 'metal') generateBrushedMetalTexture(ctx, resolution, null)
+    else generateDarkMatteTexture(ctx, resolution, null)
 
     const map = new THREE.CanvasTexture(canvas)
     map.colorSpace = THREE.SRGBColorSpace
