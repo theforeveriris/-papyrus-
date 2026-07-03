@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useMemo, useEffect } from 'react'
 import * as THREE from 'three'
 
 /* ---------- 噪声基础函数 ---------- */
@@ -327,9 +327,9 @@ function generateBrushedMetalTexture(ctx, res, tint) {
   ctx.putImageData(img, 0, 0)
 }
 
-/* ---------- 深色哑光 ---------- */
+/* ---------- 深色哑光（提升噪点对比度，避免看起来像纯色） ---------- */
 function generateDarkMatteTexture(ctx, res, tint) {
-  const base = tint || [38, 36, 34]
+  const base = tint || [62, 58, 54]
   const img = ctx.createImageData(res, res)
   const data = img.data
 
@@ -337,9 +337,10 @@ function generateDarkMatteTexture(ctx, res, tint) {
     for (let x = 0; x < res; x++) {
       const u = x / res
       const v = y / res
-      const n = fbm(u * 10, v * 10, 4) * 0.2
-      const fine = turbulence(u * 35, v * 35, 2) * 0.1
-      const dark = n + fine * 0.3
+      const n = fbm(u * 10, v * 10, 4) * 0.45
+      const fine = turbulence(u * 35, v * 35, 3) * 0.3
+      const blotch = smoothNoise(x * 0.15, y * 0.15) > 0.6 ? 0.2 : 0
+      const dark = Math.min(0.7, n + fine * 0.3 + blotch)
 
       const r = base[0] * (1 - dark)
       const g = base[1] * (1 - dark)
@@ -442,7 +443,7 @@ const deskMaterialParams = {
 }
 
 export function useDeskTexture({ type = 'oak', color = '#3a2820', resolution = 1024 } = {}) {
-  return useMemo(() => {
+  const textures = useMemo(() => {
     const canvas = document.createElement('canvas')
     canvas.width = resolution
     canvas.height = resolution
@@ -483,7 +484,7 @@ export function useDeskTexture({ type = 'oak', color = '#3a2820', resolution = 1
     roughnessMap.repeat.set(2, 2)
     roughnessMap.anisotropy = 4
 
-    return {
+    const result = {
       map,
       normalMap,
       roughnessMap,
@@ -491,5 +492,23 @@ export function useDeskTexture({ type = 'oak', color = '#3a2820', resolution = 1
       metalness: params.metalness,
       normalScale: params.normalStrength,
     }
+
+    // 切换材质时释放旧贴图，避免 GPU 显存泄漏与残留绑定
+    result.dispose = () => {
+      map.dispose()
+      normalMap.dispose()
+      roughnessMap.dispose()
+    }
+
+    return result
   }, [type, color, resolution])
+
+  // 组件卸载或贴图重建时释放旧贴图
+  useEffect(() => {
+    return () => {
+      if (textures.dispose) textures.dispose()
+    }
+  }, [textures])
+
+  return textures
 }

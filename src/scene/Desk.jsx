@@ -8,7 +8,8 @@ export default function Desk({ color = '#3a2820', type = 'oak' }) {
 
   return (
     <>
-      <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
+      {/* key={type} 强制在切换材质时整体重建网格与材质，确保新贴图正确绑定到 GPU */}
+      <mesh key={type} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
         <planeGeometry args={[12, 12, 64, 64]} />
         <meshStandardMaterial
           color="#ffffff"
