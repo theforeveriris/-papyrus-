@@ -32,15 +32,19 @@ export function usePdfControls(loadPdf) {
   const [, set] = useControls('PDF文档', () => ({
     uploadBtn: button(() => handlePdfLoad(loadPdf)),
     pdfFile: '未加载',
+    pdfPages: { value: '—', label: '页数', editable: false },
     clearBtn: button(() => {
       pdfStore.clear()
-      set({ pdfFile: '未加载' })
+      set({ pdfFile: '未加载', pdfPages: '—' })
     }),
   }))
 
   useEffect(() => {
-    return pdfStore.subscribe(({ fileName }) => {
-      set({ pdfFile: fileName || '未加载' })
+    return pdfStore.subscribe(({ fileName, pageCount }) => {
+      set({
+        pdfFile: fileName || '未加载',
+        pdfPages: fileName ? `${pageCount} 页` : '—',
+      })
     })
   }, [set])
 }

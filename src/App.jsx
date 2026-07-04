@@ -6,7 +6,7 @@ import { usePdfControls } from './controls/pdfControls.js'
 import './App.css'
 
 export default function App() {
-  const { pdfTexture, loadPdf } = usePdfTexture()
+  const { pdfTextures, loadPdf } = usePdfTexture()
   usePdfControls(loadPdf)
 
   return (
@@ -19,7 +19,7 @@ export default function App() {
       >
         <color attach="background" args={['#1a1814']} />
         <Suspense fallback={null}>
-          <Scene pdfTexture={pdfTexture} />
+          <Scene pdfTextures={pdfTextures} />
         </Suspense>
       </Canvas>
     </div>

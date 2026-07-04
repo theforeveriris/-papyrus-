@@ -12,50 +12,61 @@ async function loadPdfjs() {
   return pdfjsLib
 }
 
+function pageToTexture(page) {
+  const scale = 4
+  const viewport = page.getViewport({ scale })
+  const canvas = document.createElement('canvas')
+  canvas.width = viewport.width
+  canvas.height = viewport.height
+  const ctx = canvas.getContext('2d')
+
+  ctx.fillStyle = '#ffffff'
+  ctx.fillRect(0, 0, canvas.width, canvas.height)
+
+  return page.render({ canvasContext: ctx, viewport }).promise.then(() => {
+    const texture = new THREE.CanvasTexture(canvas)
+    texture.colorSpace = THREE.SRGBColorSpace
+    texture.anisotropy = 16
+    texture.minFilter = THREE.LinearMipmapLinearFilter
+    texture.magFilter = THREE.LinearFilter
+    texture.generateMipmaps = true
+    texture.needsUpdate = true
+    return texture
+  })
+}
+
 export function usePdfTexture() {
-  const [pdfTexture, setPdfTexture] = useState(null)
+  const [pdfTextures, setPdfTextures] = useState([])
+  const [pageCount, setPageCount] = useState(0)
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
-    return pdfStore.subscribe(({ pdfTexture: tex }) => {
-      setPdfTexture(tex)
+    return pdfStore.subscribe(({ pdfTextures: texs, pageCount: pc }) => {
+      setPdfTextures(texs)
+      setPageCount(pc)
     })
   }, [])
 
   const loadPdf = useCallback(async (file) => {
     if (!file) return
     setLoading(true)
-    pdfStore.set(null, file.name)
+    pdfStore.clear()
     try {
       const lib = await loadPdfjs()
       const arrayBuffer = await file.arrayBuffer()
       const pdf = await lib.getDocument({ data: arrayBuffer }).promise
-      const page = await pdf.getPage(1)
 
-      const scale = 4
-      const viewport = page.getViewport({ scale })
-      const canvas = document.createElement('canvas')
-      canvas.width = viewport.width
-      canvas.height = viewport.height
-      const ctx = canvas.getContext('2d')
+      const textures = []
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i)
+        const tex = await pageToTexture(page)
+        textures.push(tex)
+      }
 
-      ctx.fillStyle = '#ffffff'
-      ctx.fillRect(0, 0, canvas.width, canvas.height)
-
-      await page.render({ canvasContext: ctx, viewport }).promise
-
-      const texture = new THREE.CanvasTexture(canvas)
-      texture.colorSpace = THREE.SRGBColorSpace
-      texture.anisotropy = 16
-      texture.minFilter = THREE.LinearMipmapLinearFilter
-      texture.magFilter = THREE.LinearFilter
-      texture.generateMipmaps = true
-      texture.needsUpdate = true
-
-      pdfStore.set(texture, file.name)
+      pdfStore.set(textures, file.name)
     } catch (err) {
       console.error('PDF加载失败:', err)
-      pdfStore.set(null, '')
+      pdfStore.clear()
     } finally {
       setLoading(false)
     }
@@ -65,5 +76,5 @@ export function usePdfTexture() {
     pdfStore.clear()
   }, [])
 
-  return { pdfTexture, loading, loadPdf, clearPdf }
+  return { pdfTextures, pageCount, loading, loadPdf, clearPdf }
 }

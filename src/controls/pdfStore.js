@@ -1,32 +1,38 @@
 import * as THREE from 'three'
 
-let pdfTexture = null
+let pdfTextures = []
+let pageCount = 0
 let fileName = ''
 const listeners = new Set()
 
 function notify() {
-  listeners.forEach((fn) => fn({ pdfTexture, fileName }))
+  listeners.forEach((fn) => fn({ pdfTextures, pageCount, fileName }))
 }
 
 export const pdfStore = {
   subscribe(fn) {
     listeners.add(fn)
-    fn({ pdfTexture, fileName })
+    fn({ pdfTextures, pageCount, fileName })
     return () => listeners.delete(fn)
   },
   get() {
-    return { pdfTexture, fileName }
+    return { pdfTextures, pageCount, fileName }
   },
-  set(texture, name) {
-    pdfTexture = texture
-    fileName = name
+  set(textures, name) {
+    if (pdfTextures.length > 0) {
+      pdfTextures.forEach((t) => t.dispose())
+    }
+    pdfTextures = textures || []
+    pageCount = textures ? textures.length : 0
+    fileName = name || ''
     notify()
   },
   clear() {
-    if (pdfTexture) {
-      pdfTexture.dispose()
+    if (pdfTextures.length > 0) {
+      pdfTextures.forEach((t) => t.dispose())
     }
-    pdfTexture = null
+    pdfTextures = []
+    pageCount = 0
     fileName = ''
     notify()
   },

@@ -1,11 +1,10 @@
-import { useRef, useState } from 'react'
+import { useState } from 'react'
 import { OrbitControls } from '@react-three/drei'
 import PaperStack from '../paper/PaperStack.jsx'
 import Lighting from './Lighting.jsx'
 import Desk from './Desk.jsx'
 import PostProcessing from './PostProcessing.jsx'
 import { usePaperInteraction } from '../interaction/usePaperInteraction.js'
-import { usePdfTexture } from '../paper/usePdfTexture.js'
 import {
   usePaperControls,
   useLightingControls,
@@ -13,9 +12,9 @@ import {
   useAnimationControls,
   useSceneControls,
 } from '../controls/useControls.js'
+import { usePaperLayerControls } from '../controls/usePaperLayerControls.js'
 
-export default function Scene({ pdfTexture }) {
-  const groupRef = useRef()
+export default function Scene({ pdfTextures = [] }) {
   const [orbitEnabled, setOrbitEnabled] = useState(true)
 
   const paperCtrl = usePaperControls()
@@ -23,10 +22,12 @@ export default function Scene({ pdfTexture }) {
   const ppCtrl = usePostProcessingControls()
   const animCtrl = useAnimationControls()
   const sceneCtrl = useSceneControls()
+  usePaperLayerControls()
 
-  const { onPointerDown, onPointerMove, onPointerUp } = usePaperInteraction({
-    targetRef: groupRef,
+  const { onPaperPointerDown, setRef, selectedIndex } = usePaperInteraction({
+    count: sceneCtrl.paperCount,
     deskY: 0,
+    depth: paperCtrl.depth,
     windIntensity: animCtrl.windEnabled ? animCtrl.windIntensity : 0,
     windSpeed: animCtrl.windSpeed,
     onInteractingChange: (val) => setOrbitEnabled(!val),
@@ -57,30 +58,24 @@ export default function Scene({ pdfTexture }) {
       />
       <Desk color={sceneCtrl.deskColor} type={sceneCtrl.deskType} />
 
-      <group
-        ref={groupRef}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onPointerOut={onPointerUp}
-      >
-        <PaperStack
-          count={sceneCtrl.paperCount}
-          textureResolution={2048}
-          width={paperCtrl.width}
-          height={paperCtrl.height}
-          depth={paperCtrl.depth}
-          paperProps={paperProps}
-          pdfTexture={pdfTexture}
-        />
-      </group>
+      <PaperStack
+        count={sceneCtrl.paperCount}
+        textureResolution={2048}
+        width={paperCtrl.width}
+        height={paperCtrl.height}
+        depth={paperCtrl.depth}
+        paperProps={paperProps}
+        pdfTextures={pdfTextures}
+        onPaperPointerDown={onPaperPointerDown}
+        setPaperRef={setRef}
+      />
 
       <OrbitControls
         enabled={orbitEnabled}
         makeDefault
         target={[0, 0, 0]}
         minDistance={1.2}
-        maxDistance={6}
+        maxDistance={8}
         maxPolarAngle={Math.PI / 2 - 0.05}
         minPolarAngle={0.1}
         enableDamping

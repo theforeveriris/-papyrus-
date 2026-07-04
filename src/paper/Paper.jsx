@@ -1,47 +1,50 @@
-import { useMemo, forwardRef } from 'react'
+import { useMemo, useCallback } from 'react'
 import * as THREE from 'three'
 import { usePaperTexture } from './usePaperTexture.js'
 
-const Paper = forwardRef(function Paper(
-  {
-    seed = 1,
-    textureResolution = 2048,
-    position = [0, 0, 0],
-    rotation = [0, 0, 0],
-    castShadow = true,
-    receiveShadow = true,
-    color = '#f8f7f4',
-    roughness = 0.75,
-    metalness = 0.0,
-    sheen = 0.15,
-    sheenColor = '#ffffff',
-    sheenRoughness = 0.6,
-    transmission = 0.08,
-    thickness = 0.004,
-    ior = 1.3,
-    bumpScale = 0.002,
-    width = 1.0,
-    height = 1.414,
-    depth = 0.004,
-    pdfTexture = null,
-    ...props
-  },
-  ref
-) {
+export default function Paper({
+  paperIndex = 0,
+  seed = 1,
+  textureResolution = 2048,
+  position = [0, 0, 0],
+  rotation = [0, 0, 0],
+  castShadow = true,
+  receiveShadow = true,
+  color = '#f8f7f4',
+  roughness = 0.75,
+  metalness = 0.0,
+  sheen = 0.15,
+  sheenColor = '#ffffff',
+  sheenRoughness = 0.6,
+  transmission = 0.08,
+  thickness = 0.004,
+  ior = 1.3,
+  bumpScale = 0.002,
+  width = 1.0,
+  height = 1.414,
+  depth = 0.004,
+  pdfTexture = null,
+  onPointerDown = null,
+  setRef = null,
+}) {
   const geometry = usePaperGeometry({ width, height, depth, pdfTexture })
   const { map, bumpMap } = usePaperTexture({ seed, resolution: textureResolution })
 
   const finalMap = pdfTexture || map
 
+  const refCb = useCallback((mesh) => {
+    if (setRef) setRef(mesh)
+  }, [setRef])
+
   return (
     <mesh
-      ref={ref}
+      ref={refCb}
       geometry={geometry}
       position={position}
       rotation={rotation}
       castShadow={castShadow}
       receiveShadow={receiveShadow}
-      {...props}
+      onPointerDown={onPointerDown}
     >
       <meshPhysicalMaterial
         color={color}
@@ -62,7 +65,7 @@ const Paper = forwardRef(function Paper(
       />
     </mesh>
   )
-})
+}
 
 function usePaperGeometry({
   width = 1.0,
@@ -126,5 +129,3 @@ function usePaperGeometry({
     return geo
   }, [width, height, depth, pdfTexture])
 }
-
-export default Paper
