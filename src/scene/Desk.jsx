@@ -1,28 +1,25 @@
-import { useDeskTexture } from './useDeskTexture.js'
+import { useMemo, useRef, useEffect } from 'react'
+import * as THREE from 'three'
+import { createDeskMaterial, deskShaderPresets } from './deskShaderMaterials.js'
 
 export default function Desk({ color = '#3a2820', type = 'oak' }) {
-  const { map, normalMap, roughnessMap, roughness, metalness, normalScale } = useDeskTexture({
-    type,
-    color,
-  })
+  const materialRef = useRef(null)
+
+  const material = useMemo(() => {
+    return createDeskMaterial(type)
+  }, [type])
+
+  const params = deskShaderPresets[type] || deskShaderPresets.oak
 
   return (
     <>
-      {/* key={type} 强制在切换材质时整体重建网格与材质，确保新贴图正确绑定到 GPU */}
+      {/* key={type} 确保切换材质时整体重建，shader 重新编译 */}
       <mesh key={type} rotation={[-Math.PI / 2, 0, 0]} position={[0, 0, 0]} receiveShadow>
         <planeGeometry args={[12, 12, 64, 64]} />
-        <meshStandardMaterial
-          color="#ffffff"
-          roughness={roughness}
-          metalness={metalness}
-          map={map}
-          normalMap={normalMap}
-          normalScale={[normalScale, normalScale]}
-          roughnessMap={roughnessMap}
-          envMapIntensity={0.4}
-        />
+        <primitive object={material} attach="material" />
       </mesh>
 
+      {/* 边框 */}
       <mesh position={[0, -0.05, 6]} receiveShadow>
         <boxGeometry args={[12, 0.1, 0.02]} />
         <meshStandardMaterial color={color} roughness={0.6} />
@@ -40,6 +37,7 @@ export default function Desk({ color = '#3a2820', type = 'oak' }) {
         <meshStandardMaterial color={color} roughness={0.6} />
       </mesh>
 
+      {/* 桌面小装饰 */}
       <mesh position={[1.8, 0.001, -1.2]} rotation={[-Math.PI / 2, 0, 0.3]} receiveShadow castShadow>
         <cylinderGeometry args={[0.012, 0.012, 0.4, 8]} />
         <meshStandardMaterial color="#1a1a1a" roughness={0.4} metalness={0.6} />
